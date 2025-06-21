@@ -129,6 +129,7 @@ void Game::findBotPath() {
     }
     
     if (finishX != -1) {
+        // Use the current map state (which may have broken walls) for pathfinding
         botPath = aiBot.findPath(player.getX(), player.getY(), finishX, finishY, mapManager);
     }
 }
@@ -167,24 +168,26 @@ void Game::executeBotStep() {
     int nextX = botPath[currentBotStep + 1].first;
     int nextY = botPath[currentBotStep + 1].second;
     
-    // Update player position
-    mapManager.setCell(currentX, currentY, player.getUnderPlayer());
-    
+    // Get what's currently at the next position
     char nextCell = mapManager.getCell(nextX, nextY);
     
-    // Handle wall breaking
+    // Handle wall breaking BEFORE moving
     if (nextCell == '#') {
         // Bot is breaking a wall
         if (player.getCanBreak()) {
             mapManager.setCell(nextX, nextY, '.'); // Break the wall
             player.setCanBreak(false);
             player.setEnergy(0);
+            nextCell = '.'; // Update nextCell to reflect the broken wall
         } else {
             // Shouldn't happen if pathfinding is correct, but just in case
             botDemoFinished = true;
             return;
         }
     }
+    
+    // Update the old position with what was actually there
+    mapManager.setCell(currentX, currentY, player.getUnderPlayer());
     
     // Handle special cells
     if (nextCell == 'F') {
