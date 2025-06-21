@@ -6,9 +6,7 @@ Renderer::Renderer(sf::RenderWindow& window) : window(window) {}
 bool Renderer::initializeGraphics() {
     // Load font
     if (!font.openFromFile("/System/Library/Fonts/Arial.ttf")) {
-        // Fallback font
         if (!font.openFromFile("/System/Library/Fonts/Helvetica.ttc")) {
-            // If both fonts fail, we'll continue without a font
             std::cerr << "Warning: Could not load any fonts" << std::endl;
             return false;
         }
@@ -129,7 +127,7 @@ void Renderer::drawUI(const Player& player) {
 
     // Wall breaking status
     if (player.getCanBreak()) {
-        text.setString("⚡ Puedes romper paredes (presiona direccion + e)");
+        text.setString("Puedes romper paredes (presiona direccion + e)");
         text.setPosition(sf::Vector2f(300, WINDOW_HEIGHT - 120));
         window.draw(text);
     }
@@ -140,8 +138,6 @@ void Renderer::drawUI(const Player& player) {
         text.setFillColor(sf::Color::Yellow);
         window.draw(text);
     }
-
-    // Note: Game over messages are now handled in the dedicated game over screen
 }
 
 void Renderer::drawMenu(int selectedOption) {
@@ -212,9 +208,9 @@ void Renderer::drawGameOverScreen(bool gameWon) {
     gameOverText.setFillColor(gameWon ? sf::Color::Green : sf::Color::Red);
     
     if (gameWon) {
-        gameOverText.setString("🎉 ¡Ganaste!");
+        gameOverText.setString("Ganaste");
     } else {
-        gameOverText.setString("💀 ¡Bateria agotada!");
+        gameOverText.setString("Perdiste");
     }
     
     // Position text without using setOrigin (simpler approach)
@@ -230,4 +226,63 @@ void Renderer::drawGameOverScreen(bool gameWon) {
     // Position return text
     returnText.setPosition(sf::Vector2f(50, WINDOW_HEIGHT / 2.0f + 50));
     window.draw(returnText);
+}
+
+void Renderer::drawBotDemoUI(const Player& player, int currentStep, int totalSteps, bool botWon, bool demoFinished) {
+    // Draw energy bar
+    energyBarShape.setPosition(sf::Vector2f(50, WINDOW_HEIGHT - 150));
+    window.draw(energyBarShape);
+
+    energyFillShape.setPosition(sf::Vector2f(52, WINDOW_HEIGHT - 148));
+    energyFillShape.setSize(sf::Vector2f((player.getEnergy() * 196) / maxEnergy, 16));
+    window.draw(energyFillShape);
+
+    // Draw text
+    sf::Text text(font);
+    text.setCharacterSize(20);
+    text.setFillColor(sf::Color::White);
+
+    // Battery
+    text.setString("Bateria: " + std::to_string(player.getBattery()));
+    text.setPosition(sf::Vector2f(50, WINDOW_HEIGHT - 120));
+    window.draw(text);
+
+    // Energy
+    text.setString("Energia: " + std::to_string(player.getEnergy()) + " / " + std::to_string(maxEnergy));
+    text.setPosition(sf::Vector2f(50, WINDOW_HEIGHT - 90));
+    window.draw(text);
+
+    // Atmosphere
+    std::string atmosphere = (player.getCurrentAtmosphere() == '.') ? "Normal" : std::string(1, player.getCurrentAtmosphere());
+    text.setString("Atmosfera: " + atmosphere);
+    text.setPosition(sf::Vector2f(50, WINDOW_HEIGHT - 60));
+    window.draw(text);
+
+    // Bot demo specific info
+    text.setString("Bot Demo - Paso " + std::to_string(currentStep) + "/" + std::to_string(totalSteps));
+    text.setPosition(sf::Vector2f(300, WINDOW_HEIGHT - 120));
+    text.setFillColor(sf::Color::Yellow);
+    window.draw(text);
+
+    if (demoFinished) {
+        if (botWon) {
+            text.setString("El bot completo el nivel");
+            text.setFillColor(sf::Color::Green);
+        } else {
+            text.setString("El bot se quedo sin bateria");
+            text.setFillColor(sf::Color::Red);
+        }
+        text.setPosition(sf::Vector2f(300, WINDOW_HEIGHT - 90));
+        window.draw(text);
+        
+        text.setString("Regresando al menu en 3 segundos...");
+        text.setFillColor(sf::Color::White);
+        text.setPosition(sf::Vector2f(300, WINDOW_HEIGHT - 60));
+        window.draw(text);
+    } else {
+        text.setString("Eficiencia: " + std::to_string(totalSteps) + " pasos");
+        text.setFillColor(sf::Color::Cyan);
+        text.setPosition(sf::Vector2f(300, WINDOW_HEIGHT - 90));
+        window.draw(text);
+    }
 } 

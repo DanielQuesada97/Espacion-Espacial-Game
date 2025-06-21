@@ -6,7 +6,7 @@ bool InputHandler::handleInput(GameState& currentState, int& selectedOption,
                               Player& player, MapManager& mapManager) {
     while (const std::optional<sf::Event> event = window.pollEvent()) {
         if (event->is<sf::Event::Closed>()) {
-            return false; // Signal to close window
+            return false;
         }
 
         if (event->is<sf::Event::KeyPressed>()) {
@@ -20,16 +20,19 @@ bool InputHandler::handleInput(GameState& currentState, int& selectedOption,
                     selectedOption = (selectedOption + 1) % 7;
                 } else if (keyEvent->code == sf::Keyboard::Key::Enter) {
                     if (selectedOption == 6) { // Exit
-                        return false; // Signal to close window
+                        return false;
                     } else {
-                        // Load level based on selection
                         int difficulty = selectedOption + 1;
-                        if (selectedOption >= 3) { // Bot demo levels
+                        bool isBotDemo = false;
+                        
+                        if (selectedOption >= 3) {
                             difficulty = selectedOption - 2;
+                            isBotDemo = true;
                         }
+                        
                         mapManager.loadLevel(difficulty);
                         
-                        // Set player position and battery based on difficulty
+                        // Player position and battery
                         player.setPosition(1, 1);
                         if (difficulty == 1) {
                             player.setBattery(50);
@@ -40,7 +43,12 @@ bool InputHandler::handleInput(GameState& currentState, int& selectedOption,
                         }
                         player.reset();
                         
-                        currentState = GameState::PLAYING;
+                        if (isBotDemo) {
+                            // Signal to start bot demo
+                            currentState = GameState::BOT_DEMO;
+                        } else {
+                            currentState = GameState::PLAYING;
+                        }
                     }
                 }
             } else if (currentState == GameState::PLAYING) {

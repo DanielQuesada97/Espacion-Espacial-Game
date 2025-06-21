@@ -1,6 +1,7 @@
 #pragma once
 
 #include <SFML/Graphics.hpp>
+#include <vector>
 #include "GameConstants.h"
 #include "Player.h"
 #include "MapManager.h"
@@ -19,6 +20,13 @@ private:
     // Game over timer
     sf::Clock gameOverTimer;
     bool gameWon;
+    
+    // Bot demo variables
+    sf::Clock botDemoTimer;
+    std::vector<std::pair<int, int>> botPath;
+    int currentBotStep;
+    bool botDemoWon;
+    bool botDemoFinished;
     
     // Game components
     Player player;
@@ -44,6 +52,8 @@ public:
     // Bot demo
     void startBotDemo(int level);
     void updateBotDemo();
+    void findBotPath();
+    void executeBotStep();
     
     // Game over handling
     void checkGameOver();

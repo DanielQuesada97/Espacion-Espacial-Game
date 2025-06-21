@@ -27,6 +27,7 @@ public:
     char getCurrentAtmosphere() const { return currentAtmosphere; }
     bool getWaitingForBreak() const { return waitingForBreak; }
     bool getGameWon() const { return gameWon; }
+    char getUnderPlayer() const { return underPlayer; }
     
     // Setters
     void setPosition(int newX, int newY);
@@ -37,6 +38,7 @@ public:
     void setWaitingForBreak(bool waiting);
     void setGameWon(bool won);
     void setLastDirection(int dx, int dy);
+    void setUnderPlayer(char under);
     
     // Game logic
     void movePlayer(int dx, int dy, std::vector<std::vector<char>>& map, int rows, int cols);

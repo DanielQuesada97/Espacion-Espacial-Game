@@ -32,6 +32,7 @@ public:
     void drawUI(const Player& player);
     void drawMenu(int selectedOption);
     void drawGameOverScreen(bool gameWon);
+    void drawBotDemoUI(const Player& player, int currentStep, int totalSteps, bool botWon, bool demoFinished);
     
     // Helper methods
     void clear();

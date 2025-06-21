@@ -9,6 +9,7 @@ const int WINDOW_HEIGHT = 800;
 const int UI_HEIGHT = 200;
 const int maxEnergy = 5;
 const float GAME_OVER_DELAY = 3.0f; // 3 seconds delay before returning to menu
+const float BOT_DEMO_DELAY = 0.5f; // 0.5 seconds between bot moves
 
 // Game state
 enum class GameState {

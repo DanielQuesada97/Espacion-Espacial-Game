@@ -39,6 +39,10 @@ void Player::setLastDirection(int dx, int dy) {
     lastDY = dy;
 }
 
+void Player::setUnderPlayer(char under) {
+    underPlayer = under;
+}
+
 bool Player::isTank(char c) {
     return c == 'A' || c == 'B';
 }

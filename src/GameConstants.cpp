@@ -1,6 +1,6 @@
 #include "../include/GameConstants.h"
 
-// Color definitions
+// Colors
 sf::Color WALL_COLOR = sf::Color(64, 64, 64);
 sf::Color FLOOR_COLOR = sf::Color(200, 200, 200);
 sf::Color PLAYER_COLOR = sf::Color(0, 150, 255);
