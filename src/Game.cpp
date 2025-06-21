@@ -86,6 +86,7 @@ void Game::startBotDemo(int level) {
     currentBotStep = 0;
     botDemoWon = false;
     botDemoFinished = false;
+    botPath.clear(); // Clear any previous path
     
     mapManager.loadLevel(level);
     
@@ -109,6 +110,7 @@ void Game::startBotDemo(int level) {
     } else {
         // No path found, return to menu
         currentState = GameState::MENU;
+        botDemoActive = false; // Reset state
     }
 }
 
@@ -137,6 +139,12 @@ void Game::updateBotDemo() {
         if (botDemoTimer.getElapsedTime().asSeconds() >= 3.0f) {
             currentState = GameState::MENU;
             selectedOption = 0;
+            // Reset bot demo state for next run
+            botDemoActive = false;
+            botDemoFinished = false;
+            botDemoWon = false;
+            currentBotStep = 0;
+            botPath.clear();
         }
         return;
     }
@@ -163,6 +171,20 @@ void Game::executeBotStep() {
     mapManager.setCell(currentX, currentY, player.getUnderPlayer());
     
     char nextCell = mapManager.getCell(nextX, nextY);
+    
+    // Handle wall breaking
+    if (nextCell == '#') {
+        // Bot is breaking a wall
+        if (player.getCanBreak()) {
+            mapManager.setCell(nextX, nextY, '.'); // Break the wall
+            player.setCanBreak(false);
+            player.setEnergy(0);
+        } else {
+            // Shouldn't happen if pathfinding is correct, but just in case
+            botDemoFinished = true;
+            return;
+        }
+    }
     
     // Handle special cells
     if (nextCell == 'F') {
