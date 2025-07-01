@@ -10,30 +10,6 @@ void Player::setPosition(int newX, int newY) {
     y = newY;
 }
 
-void Player::setBattery(int newBattery) {
-    battery = newBattery;
-}
-
-void Player::setEnergy(int newEnergy) {
-    energy = newEnergy;
-}
-
-void Player::setCanBreak(bool canBreak) {
-    this->canBreak = canBreak;
-}
-
-void Player::setCurrentAtmosphere(char atmosphere) {
-    currentAtmosphere = atmosphere;
-}
-
-void Player::setWaitingForBreak(bool waiting) {
-    waitingForBreak = waiting;
-}
-
-void Player::setGameWon(bool won) {
-    gameWon = won;
-}
-
 void Player::setLastDirection(int dx, int dy) {
     lastDX = dx;
     lastDY = dy;
@@ -58,7 +34,6 @@ bool Player::isValid(int nx, int ny, const std::vector<std::vector<char>>& map, 
 
 void Player::movePlayer(int dx, int dy, std::vector<std::vector<char>>& map, int rows, int cols) {
     int nx = x + dx, ny = y + dy;
-    // Don't override lastDX and lastDY here since they're set by input handler
     
     if (nx < 0 || nx >= rows || ny < 0 || ny >= cols) return;
     char cell = map[nx][ny];

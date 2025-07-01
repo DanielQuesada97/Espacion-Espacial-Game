@@ -16,6 +16,8 @@ Game::~Game() {
 
 void Game::run() {
     while (window.isOpen()) {
+        float deltaTime = deltaClock.restart().asSeconds();
+        
         // Handle input
         if (!inputHandler.handleInput(currentState, selectedOption, player, mapManager)) {
             window.close();
@@ -31,54 +33,57 @@ void Game::run() {
 }
 
 void Game::update() {
-    if (currentState == GameState::PLAYING) {
-        // Check for game over conditions
-        checkGameOver();
-    } else if (currentState == GameState::GAME_OVER_SCREEN) {
-        // Check if it's time to return to menu
-        if (gameOverTimer.getElapsedTime().asSeconds() >= GAME_OVER_DELAY) {
-            currentState = GameState::MENU;
-            selectedOption = 0; // Reset menu selection
-        }
-    } else if (currentState == GameState::BOT_DEMO) {
-        // Check if we need to start the bot demo
-        if (!botDemoActive) {
-            // Determine which bot demo level was selected
-            int level = 1;
-            if (selectedOption == 3) level = 1; // Bot Demo - Fácil
-            else if (selectedOption == 4) level = 2; // Bot Demo - Medio
-            else if (selectedOption == 5) level = 3; // Bot Demo - Difícil
+    switch (currentState) {
+        case GameState::PLAYING:
+            checkGameOver();
+            break;
             
-            startBotDemo(level);
-        } else {
-            // Update bot demo
-            updateBotDemo();
-        }
+        case GameState::GAME_OVER_SCREEN:
+            if (gameOverTimer.getElapsedTime().asSeconds() >= GAME_OVER_DELAY) {
+                currentState = GameState::MENU;
+                selectedOption = 0;
+            }
+            break;
+            
+        case GameState::BOT_DEMO:
+            if (!botDemoActive) {
+                int level = (selectedOption >= 3) ? selectedOption - 2 : 1;
+                startBotDemo(level);
+            } else {
+                updateBotDemo();
+            }
+            break;
+            
+        default:
+            break;
     }
 }
 
 void Game::render() {
-    if (currentState == GameState::MENU) {
-        renderer.drawMenu(selectedOption);
-    } else if (currentState == GameState::PLAYING) {
-        renderer.clear();
-        renderer.drawMap(mapManager, player);
-        renderer.drawUI(player);
-    } else if (currentState == GameState::GAME_OVER_SCREEN) {
-        renderer.clear();
-        renderer.drawMap(mapManager, player);
-        renderer.drawUI(player);
-        renderer.drawGameOverScreen(gameWon);
-    } else if (currentState == GameState::BOT_DEMO) {
-        renderer.clear();
-        renderer.drawMap(mapManager, player);
-        renderer.drawBotDemoUI(player, currentBotStep, botPath.size(), botDemoWon, botDemoFinished);
+    switch (currentState) {
+        case GameState::MENU:
+            renderer.drawMenu(selectedOption);
+            break;
+            
+        case GameState::PLAYING:
+        case GameState::GAME_OVER_SCREEN:
+            renderer.clear();
+            renderer.drawMap(mapManager, player);
+            renderer.drawUI(player);
+            if (currentState == GameState::GAME_OVER_SCREEN) {
+                renderer.drawGameOverScreen(gameWon);
+            }
+            break;
+            
+        case GameState::BOT_DEMO:
+            renderer.clear();
+            renderer.drawMap(mapManager, player);
+            renderer.drawBotDemoUI(player, currentBotStep, botPath.size(), botDemoWon, botDemoFinished);
+            break;
     }
-
+    
     renderer.display();
 }
-
-void Game::handleMenuSelection() {}
 
 void Game::startBotDemo(int level) {
     botDemoLevel = level;
@@ -86,38 +91,37 @@ void Game::startBotDemo(int level) {
     currentBotStep = 0;
     botDemoWon = false;
     botDemoFinished = false;
-    botPath.clear(); // Clear any previous path
+    botPath.clear();
     
     mapManager.loadLevel(level);
     
-    // Set player position and battery based on difficulty
+    // Set position and battery based on difficulty
     player.setPosition(1, 1);
-    if (level == 1) {
-        player.setBattery(50);
-    } else if (level == 2) {
-        player.setBattery(40);
-    } else if (level == 3) {
-        player.setBattery(35);
-    }
+    // Set what's under the player at the starting position
+    player.setUnderPlayer(mapManager.getCell(1, 1));
+    // Place player on the map
+    mapManager.setCell(1, 1, 'P');
+    
+    const int batteries[] = {50, 40, 35};
+    player.battery = batteries[level - 1];
     player.reset();
     
-    // Find the path
     findBotPath();
     
     if (!botPath.empty()) {
         currentState = GameState::BOT_DEMO;
         botDemoTimer.restart();
     } else {
-        // No path found, return to menu
+        // No path, return to menu
         currentState = GameState::MENU;
-        botDemoActive = false; // Reset state
+        botDemoActive = false;
     }
 }
 
 void Game::findBotPath() {
     // Find finish position
     int finishX = -1, finishY = -1;
-    for (int i = 0; i < mapManager.getRows(); i++) {
+    for (int i = 0; i < mapManager.getRows() && finishX == -1; i++) {
         for (int j = 0; j < mapManager.getCols(); j++) {
             if (mapManager.getCell(i, j) == 'F') {
                 finishX = i;
@@ -125,22 +129,18 @@ void Game::findBotPath() {
                 break;
             }
         }
-        if (finishX != -1) break;
     }
     
     if (finishX != -1) {
-        // Use the current map state (which may have broken walls) for pathfinding
         botPath = aiBot.findPath(player.getX(), player.getY(), finishX, finishY, mapManager);
     }
 }
 
 void Game::updateBotDemo() {
     if (botDemoFinished) {
-        // Demo finished, wait a bit then return to menu
         if (botDemoTimer.getElapsedTime().asSeconds() >= 3.0f) {
             currentState = GameState::MENU;
             selectedOption = 0;
-            // Reset bot demo state for next run
             botDemoActive = false;
             botDemoFinished = false;
             botDemoWon = false;
@@ -150,7 +150,6 @@ void Game::updateBotDemo() {
         return;
     }
     
-    // moves bot with pace
     if (botDemoTimer.getElapsedTime().asSeconds() >= BOT_DEMO_DELAY) {
         executeBotStep();
         botDemoTimer.restart();
@@ -158,7 +157,7 @@ void Game::updateBotDemo() {
 }
 
 void Game::executeBotStep() {
-    if (currentBotStep >= botPath.size() - 1 || player.getBattery() <= 0) {
+    if (currentBotStep >= botPath.size() - 1 || player.battery <= 0) {
         botDemoFinished = true;
         return;
     }
@@ -168,37 +167,34 @@ void Game::executeBotStep() {
     int nextX = botPath[currentBotStep + 1].first;
     int nextY = botPath[currentBotStep + 1].second;
     
-    // Get what's currently at the next position
     char nextCell = mapManager.getCell(nextX, nextY);
     
-    // Handle wall breaking BEFORE moving
+    // Handle wall breaking
     if (nextCell == '#') {
-        // Bot is breaking a wall
-        if (player.getCanBreak()) {
-            mapManager.setCell(nextX, nextY, '.'); // Break the wall
-            player.setCanBreak(false);
-            player.setEnergy(0);
-            nextCell = '.'; // Update nextCell to reflect the broken wall
+        if (player.canBreak) {
+            mapManager.setCell(nextX, nextY, '.');
+            player.canBreak = false;
+            player.energy = 0;
+            nextCell = '.';
         } else {
-            // Shouldn't happen if pathfinding is correct, but just in case
             botDemoFinished = true;
             return;
         }
     }
     
-    // Update the old position with what was actually there
-    mapManager.setCell(currentX, currentY, player.getUnderPlayer());
+    // Update old position
+    mapManager.setCell(currentX, currentY, player.underPlayer);
     
     // Handle special cells
     if (nextCell == 'F') {
-        player.setUnderPlayer('F');
+        player.underPlayer = 'F';
         player.setPosition(nextX, nextY);
         mapManager.setCell(player.getX(), player.getY(), 'P');
         botDemoWon = true;
         botDemoFinished = true;
     } else {
         if (mapManager.isTank(nextCell)) {
-            player.setCurrentAtmosphere(nextCell);
+            player.currentAtmosphere = nextCell;
             player.updateDoors(const_cast<std::vector<std::vector<char>>&>(mapManager.getMap()), 
                              mapManager.getRows(), mapManager.getCols());
         }
@@ -209,25 +205,24 @@ void Game::executeBotStep() {
     }
     
     // Update battery and energy
-    player.setBattery(player.getBattery() - 1);
-    player.setEnergy(player.getEnergy() + 1);
-    if (player.getEnergy() >= maxEnergy) {
-        player.setEnergy(maxEnergy);
-        player.setCanBreak(true);
+    player.battery--;
+    player.energy++;
+    if (player.energy >= maxEnergy) {
+        player.energy = maxEnergy;
+        player.canBreak = true;
     }
     
     currentBotStep++;
     
-    if (player.getBattery() <= 0) {
+    if (player.battery <= 0) {
         botDemoFinished = true;
     }
 }
 
 void Game::checkGameOver() {
-    // Check if player won or lost
-    if (player.getGameWon()) {
+    if (player.gameWon) {
         startGameOverScreen(true);
-    } else if (player.getBattery() <= 0) {
+    } else if (player.battery <= 0) {
         startGameOverScreen(false);
     }
 }

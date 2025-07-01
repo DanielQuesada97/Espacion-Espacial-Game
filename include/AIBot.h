@@ -5,13 +5,14 @@
 #include <cmath>
 #include <algorithm>
 #include <optional>
+#include <memory>
 
 class MapManager;
 
 struct Node {
     int x, y;
     int gCost, hCost, fCost;
-    Node* parent;
+    std::shared_ptr<Node> parent;
     char atmosphere;
     bool canBreakWall;
     int energy;
@@ -20,7 +21,7 @@ struct Node {
 };
 
 struct Compare {
-    bool operator()(Node* a, Node* b);
+    bool operator()(const std::shared_ptr<Node>& a, const std::shared_ptr<Node>& b);
 };
 
 class AIBot {

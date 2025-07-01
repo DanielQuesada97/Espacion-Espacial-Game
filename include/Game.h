@@ -28,6 +28,9 @@ private:
     bool botDemoWon;
     bool botDemoFinished;
     
+    // Delta time for smooth animations
+    sf::Clock deltaClock;
+    
     // Game components
     Player player;
     MapManager mapManager;
@@ -45,9 +48,6 @@ public:
     // Game state management
     void update();
     void render();
-    
-    // Menu handling
-    void handleMenuSelection();
     
     // Bot demo
     void startBotDemo(int level);

@@ -16,7 +16,6 @@ set(SOURCES
     src/AIBot.cpp
     src/Renderer.cpp
     src/InputHandler.cpp
-    src/GameConstants.cpp
 )
 
 add_executable(estacion_espacial_v3 ${SOURCES})
@@ -35,3 +34,10 @@ target_link_libraries(estacion_espacial_v3 PRIVATE
 if(APPLE)
     target_compile_options(estacion_espacial_v3 PRIVATE -std=c++20)
 endif()
+
+# Copy maps directory to build directory
+add_custom_command(TARGET estacion_espacial_v3 POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    ${CMAKE_SOURCE_DIR}/maps
+    ${CMAKE_BINARY_DIR}/maps
+)
