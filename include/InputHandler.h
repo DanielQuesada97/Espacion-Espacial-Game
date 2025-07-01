@@ -9,6 +9,8 @@
 class InputHandler {
 private:
     sf::RenderWindow& window;
+    void handlePlayerMovement(const sf::Event::KeyPressed* keyEvent, 
+                             Player& player, MapManager& mapManager);
 
 public:
     InputHandler(sf::RenderWindow& window);

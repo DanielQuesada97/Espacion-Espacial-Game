@@ -6,7 +6,7 @@ bool InputHandler::handleInput(GameState& currentState, int& selectedOption,
                               Player& player, MapManager& mapManager) {
     while (const std::optional<sf::Event> event = window.pollEvent()) {
         if (event->is<sf::Event::Closed>()) {
-            return false; // Signal to close window
+            return false;
         }
 
         if (event->is<sf::Event::KeyPressed>()) {
@@ -20,65 +20,48 @@ bool InputHandler::handleInput(GameState& currentState, int& selectedOption,
                     selectedOption = (selectedOption + 1) % 7;
                 } else if (keyEvent->code == sf::Keyboard::Key::Enter) {
                     if (selectedOption == 6) { // Exit
-                        return false; // Signal to close window
+                        return false;
                     } else {
-                        // Load level based on selection
                         int difficulty = selectedOption + 1;
-                        if (selectedOption >= 3) { // Bot demo levels
+                        bool isBotDemo = false;
+                        
+                        if (selectedOption >= 3) {
                             difficulty = selectedOption - 2;
+                            isBotDemo = true;
                         }
+                        
                         mapManager.loadLevel(difficulty);
                         
-                        // Set player position and battery based on difficulty
+                        // Player position and battery
                         player.setPosition(1, 1);
+                        // Set what's under the player at the starting position
+                        player.setUnderPlayer(mapManager.getCell(1, 1));
+                        // Place player on the map
+                        mapManager.setCell(1, 1, 'P');
+                        
                         if (difficulty == 1) {
-                            player.setBattery(50);
+                            player.battery = 50;
                         } else if (difficulty == 2) {
-                            player.setBattery(40);
+                            player.battery = 40;
                         } else if (difficulty == 3) {
-                            player.setBattery(35);
+                            player.battery = 35;
                         }
                         player.reset();
                         
-                        currentState = GameState::PLAYING;
+                        if (isBotDemo) {
+                            // Signal to start bot demo
+                            currentState = GameState::BOT_DEMO;
+                        } else {
+                            currentState = GameState::PLAYING;
+                        }
                     }
                 }
             } else if (currentState == GameState::PLAYING) {
-                if (keyEvent->code == sf::Keyboard::Key::W) {
-                    player.setLastDirection(-1, 0);
-                    if (player.getCanBreak() && mapManager.isWall(player.getX() - 1, player.getY())) {
-                        player.setWaitingForBreak(true);
-                    } else {
-                        player.movePlayer(-1, 0, const_cast<std::vector<std::vector<char>>&>(mapManager.getMap()), 
-                                        mapManager.getRows(), mapManager.getCols());
-                    }
-                } else if (keyEvent->code == sf::Keyboard::Key::S) {
-                    player.setLastDirection(1, 0);
-                    if (player.getCanBreak() && mapManager.isWall(player.getX() + 1, player.getY())) {
-                        player.setWaitingForBreak(true);
-                    } else {
-                        player.movePlayer(1, 0, const_cast<std::vector<std::vector<char>>&>(mapManager.getMap()), 
-                                        mapManager.getRows(), mapManager.getCols());
-                    }
-                } else if (keyEvent->code == sf::Keyboard::Key::A) {
-                    player.setLastDirection(0, -1);
-                    if (player.getCanBreak() && mapManager.isWall(player.getX(), player.getY() - 1)) {
-                        player.setWaitingForBreak(true);
-                    } else {
-                        player.movePlayer(0, -1, const_cast<std::vector<std::vector<char>>&>(mapManager.getMap()), 
-                                        mapManager.getRows(), mapManager.getCols());
-                    }
-                } else if (keyEvent->code == sf::Keyboard::Key::D) {
-                    player.setLastDirection(0, 1);
-                    if (player.getCanBreak() && mapManager.isWall(player.getX(), player.getY() + 1)) {
-                        player.setWaitingForBreak(true);
-                    } else {
-                        player.movePlayer(0, 1, const_cast<std::vector<std::vector<char>>&>(mapManager.getMap()), 
-                                        mapManager.getRows(), mapManager.getCols());
-                    }
-                } else if (keyEvent->code == sf::Keyboard::Key::E && player.getWaitingForBreak()) {
+                handlePlayerMovement(keyEvent, player, mapManager);
+                
+                if (keyEvent->code == sf::Keyboard::Key::E && player.getWaitingForBreak()) {
                     player.breakWall(const_cast<std::vector<std::vector<char>>&>(mapManager.getMap()));
-                    player.setWaitingForBreak(false);
+                    player.waitingForBreak = false;
                 } else if (keyEvent->code == sf::Keyboard::Key::Escape) {
                     currentState = GameState::MENU;
                 }
@@ -86,6 +69,40 @@ bool InputHandler::handleInput(GameState& currentState, int& selectedOption,
         }
     }
     return true; // Continue running
+}
+
+void InputHandler::handlePlayerMovement(const sf::Event::KeyPressed* keyEvent, 
+                                       Player& player, MapManager& mapManager) {
+    // Direction mapping: W=up, S=down, A=left, D=right
+    struct Direction {
+        int dx, dy;
+        sf::Keyboard::Key key;
+    };
+    
+    static const Direction directions[] = {
+        {-1, 0, sf::Keyboard::Key::W}, 
+        {1, 0, sf::Keyboard::Key::S}, 
+        {0, -1, sf::Keyboard::Key::A}, 
+        {0, 1, sf::Keyboard::Key::D}
+    };
+    
+    for (const auto& dir : directions) {
+        if (keyEvent->code == dir.key) {
+            player.setLastDirection(dir.dx, dir.dy);
+            
+            int newX = player.getX() + dir.dx;
+            int newY = player.getY() + dir.dy;
+            
+            if (player.getCanBreak() && mapManager.isWall(newX, newY)) {
+                player.waitingForBreak = true;
+            } else {
+                player.movePlayer(dir.dx, dir.dy, 
+                                const_cast<std::vector<std::vector<char>>&>(mapManager.getMap()), 
+                                mapManager.getRows(), mapManager.getCols());
+            }
+            break;
+        }
+    }
 }
 
 bool InputHandler::isWindowClosed() const {

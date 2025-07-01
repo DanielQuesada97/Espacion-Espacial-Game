@@ -4,21 +4,24 @@
 #include <string>
 
 class Player {
-private:
+public:
+    // Core player state - made public for direct access
     int x, y;
     int battery;
     int energy;
     bool canBreak;
-    int lastDX, lastDY;
     char currentAtmosphere;
     char underPlayer;
-    bool waitingForBreak;
     bool gameWon;
+    bool waitingForBreak;
+
+private:
+    int lastDX, lastDY;
 
 public:
     Player();
     
-    // Getters
+    // Essential getters (only for complex logic or when needed externally)
     int getX() const { return x; }
     int getY() const { return y; }
     int getBattery() const { return battery; }
@@ -27,16 +30,12 @@ public:
     char getCurrentAtmosphere() const { return currentAtmosphere; }
     bool getWaitingForBreak() const { return waitingForBreak; }
     bool getGameWon() const { return gameWon; }
+    char getUnderPlayer() const { return underPlayer; }
     
-    // Setters
+    // Essential setters (only for complex logic)
     void setPosition(int newX, int newY);
-    void setBattery(int newBattery);
-    void setEnergy(int newEnergy);
-    void setCanBreak(bool canBreak);
-    void setCurrentAtmosphere(char atmosphere);
-    void setWaitingForBreak(bool waiting);
-    void setGameWon(bool won);
     void setLastDirection(int dx, int dy);
+    void setUnderPlayer(char under);
     
     // Game logic
     void movePlayer(int dx, int dy, std::vector<std::vector<char>>& map, int rows, int cols);

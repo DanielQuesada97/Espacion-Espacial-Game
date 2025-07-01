@@ -1,96 +1,171 @@
 #include "../include/Renderer.h"
 #include <iostream>
 
-Renderer::Renderer(sf::RenderWindow& window) : window(window) {}
+Renderer::Renderer(sf::RenderWindow& window) : window(window), fontLoaded(false) {}
 
-bool Renderer::initializeGraphics() {
-    // Load font
-    if (!font.openFromFile("/System/Library/Fonts/Arial.ttf")) {
-        // Fallback font
-        if (!font.openFromFile("/System/Library/Fonts/Helvetica.ttc")) {
-            // If both fonts fail, we'll continue without a font
-            std::cerr << "Warning: Could not load any fonts" << std::endl;
-            return false;
+int Renderer::calculateCellSize(const MapManager& mapManager) const {
+    // Calculate available space for the map
+    int availableWidth = WINDOW_WIDTH;
+    int availableHeight = WINDOW_HEIGHT - UI_HEIGHT;
+    
+    // Calculate cell sizes that would fit the map
+    int cellSizeWidth = availableWidth / mapManager.getCols();
+    int cellSizeHeight = availableHeight / mapManager.getRows();
+    
+    // Use the smaller of the two to ensure the map fits in both dimensions
+    int cellSize = std::min(cellSizeWidth, cellSizeHeight);
+    
+    // Ensure minimum cell size for visibility
+    cellSize = std::max(cellSize, 20);
+    
+    // Ensure maximum cell size for consistency with original design
+    cellSize = std::min(cellSize, CELL_SIZE);
+    
+    return cellSize;
+}
+
+bool Renderer::createDefaultFont() {
+    // Try to create a simple default font
+    // For now, we'll just try to load a basic system font
+    std::vector<std::string> fallbackPaths = {
+        "/System/Library/Fonts/Helvetica.ttc",
+        "/System/Library/Fonts/Arial.ttf",
+        "/Library/Fonts/Arial.ttf"
+    };
+    
+    for (const auto& path : fallbackPaths) {
+        if (defaultFont.openFromFile(path)) {
+            return true;
         }
     }
+    return false;
+}
 
-    // Initialize shapes
+sf::Text Renderer::createText(const std::string& string, unsigned int size, const sf::Color& color) {
+    const sf::Font& textFont = fontLoaded ? font : defaultFont;
+    sf::Text text(textFont, string, size);
+    text.setFillColor(color);
+    return text;
+}
+
+
+
+bool Renderer::initializeGraphics() {
+    // Load font - try multiple common macOS font locations
+    std::vector<std::string> fontPaths = {
+        "/System/Library/Fonts/Helvetica.ttc",
+        "/System/Library/Fonts/Arial.ttf",
+        "/Library/Fonts/Arial.ttf",
+        "/System/Library/Fonts/STHeiti Light.ttc",
+        "/System/Library/Fonts/STHeiti Medium.ttc",
+        "/System/Library/Fonts/PingFang.ttc"
+    };
+    
+    fontLoaded = false;
+    for (const auto& path : fontPaths) {
+        if (font.openFromFile(path)) {
+            fontLoaded = true;
+            std::cout << "Font loaded successfully from: " << path << std::endl;
+            break;
+        }
+    }
+    
+
+
+    // Initialize shapes with enhanced styling
     cellShape.setSize(sf::Vector2f(CELL_SIZE, CELL_SIZE));
     cellShape.setOutlineThickness(1);
-    cellShape.setOutlineColor(sf::Color::Black);
+    cellShape.setOutlineColor(sf::Color(60, 60, 80));
 
-    playerShape.setRadius(CELL_SIZE / 2 - 2);
+    playerShape.setRadius(CELL_SIZE / 2 - 3);
     playerShape.setFillColor(PLAYER_COLOR);
-    playerShape.setOutlineThickness(2);
+    playerShape.setOutlineThickness(3);
     playerShape.setOutlineColor(sf::Color::White);
 
-    tankShape.setRadius(CELL_SIZE / 2 - 2);
-    tankShape.setOutlineThickness(2);
+    tankShape.setRadius(CELL_SIZE / 2 - 3);
+    tankShape.setOutlineThickness(3);
     tankShape.setOutlineColor(sf::Color::White);
 
     wallShape.setSize(sf::Vector2f(CELL_SIZE, CELL_SIZE));
     wallShape.setFillColor(WALL_COLOR);
     wallShape.setOutlineThickness(1);
-    wallShape.setOutlineColor(sf::Color::Black);
+    wallShape.setOutlineColor(sf::Color(30, 30, 50));
 
     doorShape.setSize(sf::Vector2f(CELL_SIZE, CELL_SIZE));
-    doorShape.setOutlineThickness(1);
-    doorShape.setOutlineColor(sf::Color::Black);
+    doorShape.setOutlineThickness(2);
+    doorShape.setOutlineColor(sf::Color(100, 80, 40));
 
     finishShape.setSize(sf::Vector2f(CELL_SIZE, CELL_SIZE));
     finishShape.setFillColor(FINISH_COLOR);
-    finishShape.setOutlineThickness(2);
-    finishShape.setOutlineColor(sf::Color::Black);
+    finishShape.setOutlineThickness(3);
+    finishShape.setOutlineColor(sf::Color::White);
 
-    energyBarShape.setSize(sf::Vector2f(200, 20));
+    // Enhanced energy bar
+    energyBarShape.setSize(sf::Vector2f(250, 25));
     energyBarShape.setFillColor(ENERGY_BAR_COLOR);
     energyBarShape.setOutlineThickness(2);
-    energyBarShape.setOutlineColor(sf::Color::White);
+    energyBarShape.setOutlineColor(sf::Color(60, 60, 80));
 
-    energyFillShape.setSize(sf::Vector2f(0, 16));
+    energyFillShape.setSize(sf::Vector2f(0, 21));
     energyFillShape.setFillColor(ENERGY_FILL_COLOR);
     
     return true;
 }
 
 void Renderer::drawMap(const MapManager& mapManager, const Player& player) {
-    int offsetX = (WINDOW_WIDTH - mapManager.getCols() * CELL_SIZE) / 2;
-    int offsetY = (WINDOW_HEIGHT - UI_HEIGHT - mapManager.getRows() * CELL_SIZE) / 2;
+    int cellSize = calculateCellSize(mapManager);
+    int offsetX = (WINDOW_WIDTH - mapManager.getCols() * cellSize) / 2;
+    int offsetY = (WINDOW_HEIGHT - UI_HEIGHT - mapManager.getRows() * cellSize) / 2;
 
+    // Draw background grid
     for (int i = 0; i < mapManager.getRows(); i++) {
         for (int j = 0; j < mapManager.getCols(); j++) {
-            float x = offsetX + j * CELL_SIZE;
-            float y = offsetY + i * CELL_SIZE;
+            float x = offsetX + j * cellSize;
+            float y = offsetY + i * cellSize;
 
             char cell = mapManager.getCell(i, j);
 
             if (cell == '#') {
+                wallShape.setSize(sf::Vector2f(cellSize, cellSize));
                 wallShape.setPosition(sf::Vector2f(x, y));
                 window.draw(wallShape);
             } else if (cell == '.' || cell == 'P') {
+                cellShape.setSize(sf::Vector2f(cellSize, cellSize));
                 cellShape.setPosition(sf::Vector2f(x, y));
                 cellShape.setFillColor(FLOOR_COLOR);
                 window.draw(cellShape);
             } else if (cell == 'A' || cell == 'B') {
+                cellShape.setSize(sf::Vector2f(cellSize, cellSize));
                 cellShape.setPosition(sf::Vector2f(x, y));
                 cellShape.setFillColor(FLOOR_COLOR);
                 window.draw(cellShape);
 
-                tankShape.setPosition(sf::Vector2f(x + 2, y + 2));
+                tankShape.setRadius(cellSize / 2 - 3);
+                tankShape.setPosition(sf::Vector2f(x + 3, y + 3));
                 tankShape.setFillColor(cell == 'A' ? TANK_A_COLOR : TANK_B_COLOR);
                 window.draw(tankShape);
             } else if (cell == 'D' || cell == 'O') {
+                doorShape.setSize(sf::Vector2f(cellSize, cellSize));
                 doorShape.setPosition(sf::Vector2f(x, y));
                 doorShape.setFillColor(cell == 'O' ? DOOR_OPEN_COLOR : DOOR_CLOSED_COLOR);
                 window.draw(doorShape);
             } else if (cell == 'F') {
+                finishShape.setSize(sf::Vector2f(cellSize, cellSize));
                 finishShape.setPosition(sf::Vector2f(x, y));
                 window.draw(finishShape);
             }
 
-            // Draw player
+            // Draw player with glow effect
             if (i == player.getX() && j == player.getY()) {
-                playerShape.setPosition(sf::Vector2f(x + 2, y + 2));
+                // Draw glow
+                sf::CircleShape glow;
+                glow.setRadius(cellSize / 2);
+                glow.setPosition(sf::Vector2f(x, y));
+                glow.setFillColor(sf::Color(0, 150, 255, 50));
+                window.draw(glow);
+                
+                playerShape.setRadius(cellSize / 2 - 3);
+                playerShape.setPosition(sf::Vector2f(x + 3, y + 3));
                 window.draw(playerShape);
             }
         }
@@ -98,100 +173,100 @@ void Renderer::drawMap(const MapManager& mapManager, const Player& player) {
 }
 
 void Renderer::drawUI(const Player& player) {
-    // Draw energy bar
+    // Draw UI background
+    sf::RectangleShape uiBackground;
+    uiBackground.setSize(sf::Vector2f(WINDOW_WIDTH, UI_HEIGHT));
+    uiBackground.setPosition(sf::Vector2f(0, WINDOW_HEIGHT - UI_HEIGHT));
+    uiBackground.setFillColor(UI_BACKGROUND_COLOR);
+    uiBackground.setOutlineThickness(2);
+    uiBackground.setOutlineColor(sf::Color(60, 60, 80));
+    window.draw(uiBackground);
+
+    // Draw energy bar with enhanced styling
     energyBarShape.setPosition(sf::Vector2f(50, WINDOW_HEIGHT - 150));
     window.draw(energyBarShape);
 
     energyFillShape.setPosition(sf::Vector2f(52, WINDOW_HEIGHT - 148));
-    energyFillShape.setSize(sf::Vector2f((player.getEnergy() * 196) / maxEnergy, 16));
+    energyFillShape.setSize(sf::Vector2f((player.getEnergy() * 246) / maxEnergy, 21));
     window.draw(energyFillShape);
 
-    // Draw text
-    sf::Text text(font);
-    text.setCharacterSize(20);
-    text.setFillColor(sf::Color::White);
+    // Draw text with enhanced styling
+    auto batteryText = createText("Bateria: " + std::to_string(player.getBattery()), 22, TEXT_COLOR);
+    batteryText.setPosition(sf::Vector2f(50, WINDOW_HEIGHT - 120));
+    window.draw(batteryText);
 
-    // Battery
-    text.setString("Bateria: " + std::to_string(player.getBattery()));
-    text.setPosition(sf::Vector2f(50, WINDOW_HEIGHT - 120));
-    window.draw(text);
-
-    // Energy
-    text.setString("Energia: " + std::to_string(player.getEnergy()) + " / " + std::to_string(maxEnergy));
-    text.setPosition(sf::Vector2f(50, WINDOW_HEIGHT - 90));
-    window.draw(text);
+    auto energyText = createText("Energia: " + std::to_string(player.getEnergy()) + " / " + std::to_string(maxEnergy), 22, TEXT_COLOR);
+    energyText.setPosition(sf::Vector2f(50, WINDOW_HEIGHT - 90));
+    window.draw(energyText);
 
     // Atmosphere
     std::string atmosphere = (player.getCurrentAtmosphere() == '.') ? "Normal" : std::string(1, player.getCurrentAtmosphere());
-    text.setString("Atmosfera: " + atmosphere);
-    text.setPosition(sf::Vector2f(50, WINDOW_HEIGHT - 60));
-    window.draw(text);
+    auto atmosphereText = createText("Atmosfera: " + atmosphere, 22, TEXT_COLOR);
+    atmosphereText.setPosition(sf::Vector2f(50, WINDOW_HEIGHT - 60));
+    window.draw(atmosphereText);
 
-    // Wall breaking status
+    // Wall breaking status with enhanced styling
     if (player.getCanBreak()) {
-        text.setString("⚡ Puedes romper paredes (presiona direccion + e)");
-        text.setPosition(sf::Vector2f(300, WINDOW_HEIGHT - 120));
-        window.draw(text);
+        auto breakText = createText("Puedes romper paredes (presiona direccion + e)", 22, HIGHLIGHT_COLOR);
+        breakText.setPosition(sf::Vector2f(350, WINDOW_HEIGHT - 120));
+        window.draw(breakText);
     }
 
     if (player.getWaitingForBreak()) {
-        text.setString("Esperando 'e' para romper pared...");
-        text.setPosition(sf::Vector2f(300, WINDOW_HEIGHT - 90));
-        text.setFillColor(sf::Color::Yellow);
-        window.draw(text);
+        auto waitText = createText("Esperando 'e' para romper pared...", 22, HIGHLIGHT_COLOR);
+        waitText.setPosition(sf::Vector2f(350, WINDOW_HEIGHT - 90));
+        window.draw(waitText);
     }
-
-    // Note: Game over messages are now handled in the dedicated game over screen
 }
 
 void Renderer::drawMenu(int selectedOption) {
-    window.clear(sf::Color(30, 30, 30));
+    window.clear(UI_BACKGROUND_COLOR);
 
-    sf::Text title(font);
-    title.setString("ESTACION ESPACIAL");
-    title.setCharacterSize(40);
-    title.setFillColor(sf::Color::White);
-    title.setPosition(sf::Vector2f(WINDOW_WIDTH / 2 - 150, 100));
+    // Draw title with enhanced styling
+    auto title = createText("ESTACION ESPACIAL", 48, HIGHLIGHT_COLOR);
+    title.setPosition(sf::Vector2f(WINDOW_WIDTH / 2 - 200, 80));
     window.draw(title);
 
     std::vector<std::string> options = {
-        "1. Jugar - Facil",
-        "2. Jugar - Medio",
-        "3. Jugar - Dificil",
-        "4. Bot Demo - Facil",
-        "5. Bot Demo - Medio",
-        "6. Bot Demo - Dificil",
-        "7. Salir"
+        "Jugar - Facil",
+        "Jugar - Medio", 
+        "Jugar - Dificil",
+        "Bot Demo - Facil",
+        "Bot Demo - Medio",
+        "Bot Demo - Dificil",
+        "Salir"
     };
 
-    sf::Text optionText(font);
-    optionText.setCharacterSize(24);
-
     for (int i = 0; i < options.size(); i++) {
-        optionText.setString(options[i]);
-        optionText.setPosition(sf::Vector2f(200, 200 + i * 50));
-
+        sf::Color textColor = (i == selectedOption) ? HIGHLIGHT_COLOR : TEXT_COLOR;
+        std::string optionString = options[i];
+        
         if (i == selectedOption) {
-            optionText.setFillColor(sf::Color::Yellow);
-            optionText.setString("> " + options[i]);
-        } else {
-            optionText.setFillColor(sf::Color::White);
+            optionString = "> " + options[i];
+            
+            // Draw selection highlight
+            sf::RectangleShape highlight;
+            highlight.setSize(sf::Vector2f(400, 40));
+            highlight.setPosition(sf::Vector2f(180, 195 + i * 55));
+            highlight.setFillColor(sf::Color(60, 60, 80, 100));
+            highlight.setOutlineThickness(2);
+            highlight.setOutlineColor(HIGHLIGHT_COLOR);
+            window.draw(highlight);
         }
-
+        
+        auto optionText = createText(optionString, 26, textColor);
+        optionText.setPosition(sf::Vector2f(200, 200 + i * 55));
         window.draw(optionText);
     }
 
-    // Instructions
-    sf::Text instructions(font);
-    instructions.setString("Usa W/A/S/D para mover, direccion + E para romper paredes");
-    instructions.setCharacterSize(16);
-    instructions.setFillColor(sf::Color(128, 128, 128));
+    // Enhanced instructions
+    auto instructions = createText("Usa W/A/S/D para mover, direccion + E para romper paredes", 18, sf::Color(150, 150, 170));
     instructions.setPosition(sf::Vector2f(50, WINDOW_HEIGHT - 50));
     window.draw(instructions);
 }
 
 void Renderer::clear() {
-    window.clear(sf::Color(20, 20, 20));
+    window.clear(UI_BACKGROUND_COLOR);
 }
 
 void Renderer::display() {
@@ -202,32 +277,73 @@ void Renderer::drawGameOverScreen(bool gameWon) {
     // Create a semi-transparent overlay
     sf::RectangleShape overlay;
     overlay.setSize(sf::Vector2f(WINDOW_WIDTH, WINDOW_HEIGHT));
-    overlay.setFillColor(sf::Color(0, 0, 0, 128)); // Semi-transparent black
+    overlay.setFillColor(sf::Color(0, 0, 0, 180));
     overlay.setPosition(sf::Vector2f(0, 0));
     window.draw(overlay);
 
-    // Draw the game over message
-    sf::Text gameOverText(font);
-    gameOverText.setCharacterSize(60);
-    gameOverText.setFillColor(gameWon ? sf::Color::Green : sf::Color::Red);
-    
-    if (gameWon) {
-        gameOverText.setString("🎉 ¡Ganaste!");
-    } else {
-        gameOverText.setString("💀 ¡Bateria agotada!");
-    }
-    
-    // Position text without using setOrigin (simpler approach)
-    gameOverText.setPosition(sf::Vector2f(50, WINDOW_HEIGHT / 2.0f - 50));
+    // Draw the game over message with enhanced styling
+    std::string gameOverString = gameWon ? "Ganaste" : "Perdiste";
+    auto gameOverText = createText(gameOverString, 72, gameWon ? SUCCESS_COLOR : ERROR_COLOR);
+    gameOverText.setPosition(sf::Vector2f(WINDOW_WIDTH / 2 - 150, WINDOW_HEIGHT / 2 - 100));
     window.draw(gameOverText);
 
     // Draw return to menu message
-    sf::Text returnText(font);
-    returnText.setString("Regresando al menu en 3 segundos...");
-    returnText.setCharacterSize(24);
-    returnText.setFillColor(sf::Color::White);
-    
-    // Position return text
-    returnText.setPosition(sf::Vector2f(50, WINDOW_HEIGHT / 2.0f + 50));
+    auto returnText = createText("Regresando al menu en 3 segundos...", 28, TEXT_COLOR);
+    returnText.setPosition(sf::Vector2f(WINDOW_WIDTH / 2 - 200, WINDOW_HEIGHT / 2 + 50));
     window.draw(returnText);
+}
+
+void Renderer::drawBotDemoUI(const Player& player, int currentStep, int totalSteps, bool botWon, bool demoFinished) {
+    // Draw UI background
+    sf::RectangleShape uiBackground;
+    uiBackground.setSize(sf::Vector2f(WINDOW_WIDTH, UI_HEIGHT));
+    uiBackground.setPosition(sf::Vector2f(0, WINDOW_HEIGHT - UI_HEIGHT));
+    uiBackground.setFillColor(UI_BACKGROUND_COLOR);
+    uiBackground.setOutlineThickness(2);
+    uiBackground.setOutlineColor(sf::Color(60, 60, 80));
+    window.draw(uiBackground);
+
+    // Draw energy bar
+    energyBarShape.setPosition(sf::Vector2f(50, WINDOW_HEIGHT - 150));
+    window.draw(energyBarShape);
+
+    energyFillShape.setPosition(sf::Vector2f(52, WINDOW_HEIGHT - 148));
+    energyFillShape.setSize(sf::Vector2f((player.getEnergy() * 246) / maxEnergy, 21));
+    window.draw(energyFillShape);
+
+    // Draw text with enhanced styling
+    auto batteryText = createText("Bateria: " + std::to_string(player.getBattery()), 22, TEXT_COLOR);
+    batteryText.setPosition(sf::Vector2f(50, WINDOW_HEIGHT - 120));
+    window.draw(batteryText);
+
+    auto energyText = createText("Energia: " + std::to_string(player.getEnergy()) + " / " + std::to_string(maxEnergy), 22, TEXT_COLOR);
+    energyText.setPosition(sf::Vector2f(50, WINDOW_HEIGHT - 90));
+    window.draw(energyText);
+
+    // Atmosphere
+    std::string atmosphere = (player.getCurrentAtmosphere() == '.') ? "Normal" : std::string(1, player.getCurrentAtmosphere());
+    auto atmosphereText = createText("Atmosfera: " + atmosphere, 22, TEXT_COLOR);
+    atmosphereText.setPosition(sf::Vector2f(50, WINDOW_HEIGHT - 60));
+    window.draw(atmosphereText);
+
+    // Bot demo specific info with enhanced styling
+    auto demoText = createText("Bot Demo - Paso " + std::to_string(currentStep) + "/" + std::to_string(totalSteps - 1), 22, HIGHLIGHT_COLOR);
+    demoText.setPosition(sf::Vector2f(350, WINDOW_HEIGHT - 120));
+    window.draw(demoText);
+
+    if (demoFinished) {
+        std::string resultString = botWon ? "El bot completo el nivel" : "El bot se quedo sin bateria";
+        sf::Color resultColor = botWon ? SUCCESS_COLOR : ERROR_COLOR;
+        auto resultText = createText(resultString, 22, resultColor);
+        resultText.setPosition(sf::Vector2f(350, WINDOW_HEIGHT - 90));
+        window.draw(resultText);
+        
+        auto returnText = createText("Regresando al menu en 3 segundos...", 22, TEXT_COLOR);
+        returnText.setPosition(sf::Vector2f(350, WINDOW_HEIGHT - 60));
+        window.draw(returnText);
+    } else {
+        auto efficiencyText = createText("Eficiencia: " + std::to_string(totalSteps - 1) + " pasos", 22, sf::Color(0, 200, 255));
+        efficiencyText.setPosition(sf::Vector2f(350, WINDOW_HEIGHT - 90));
+        window.draw(efficiencyText);
+    }
 } 

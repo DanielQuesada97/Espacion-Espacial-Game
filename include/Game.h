@@ -1,6 +1,7 @@
 #pragma once
 
 #include <SFML/Graphics.hpp>
+#include <vector>
 #include "GameConstants.h"
 #include "Player.h"
 #include "MapManager.h"
@@ -20,6 +21,16 @@ private:
     sf::Clock gameOverTimer;
     bool gameWon;
     
+    // Bot demo variables
+    sf::Clock botDemoTimer;
+    std::vector<std::pair<int, int>> botPath;
+    int currentBotStep;
+    bool botDemoWon;
+    bool botDemoFinished;
+    
+    // Delta time for smooth animations
+    sf::Clock deltaClock;
+    
     // Game components
     Player player;
     MapManager mapManager;
@@ -38,12 +49,11 @@ public:
     void update();
     void render();
     
-    // Menu handling
-    void handleMenuSelection();
-    
     // Bot demo
     void startBotDemo(int level);
     void updateBotDemo();
+    void findBotPath();
+    void executeBotStep();
     
     // Game over handling
     void checkGameOver();

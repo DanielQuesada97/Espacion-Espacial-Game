@@ -6,7 +6,7 @@
 Node::Node(int x, int y) : x(x), y(y), gCost(0), hCost(0), fCost(0), parent(nullptr), 
                            atmosphere('.'), canBreakWall(false), energy(0) {}
 
-bool Compare::operator()(Node* a, Node* b) {
+bool Compare::operator()(const std::shared_ptr<Node>& a, const std::shared_ptr<Node>& b) {
     return a->fCost > b->fCost;
 }
 
@@ -16,15 +16,12 @@ int AIBot::heuristic(int x1, int y1, int x2, int y2) {
     return abs(x1 - x2) + abs(y1 - y2);
 }
 
-std::vector<std::pair<int, int>> AIBot::findPath(int startX, int startY, int endX, int endY, 
-                                                const MapManager& mapManager) {
-    std::priority_queue<Node*, std::vector<Node*>, Compare> openSet;
-    std::vector<std::vector<bool>> closedSet(mapManager.getRows(), 
-                                            std::vector<bool>(mapManager.getCols(), false));
-    std::vector<std::vector<Node*>> nodeMap(mapManager.getRows(), 
-                                           std::vector<Node*>(mapManager.getCols(), nullptr));
+std::vector<std::pair<int, int>> AIBot::findPath(int startX, int startY, int endX, int endY, const MapManager& mapManager) {
+    std::priority_queue<std::shared_ptr<Node>, std::vector<std::shared_ptr<Node>>, Compare> openSet;
+    std::vector closedSet(mapManager.getRows(),std::vector(mapManager.getCols(), false));
+    std::vector nodeMap(mapManager.getRows(),std::vector<std::shared_ptr<Node>>(mapManager.getCols(), nullptr));
 
-    Node* startNode = new Node(startX, startY);
+    auto startNode = std::make_shared<Node>(startX, startY);
     startNode->hCost = heuristic(startX, startY, endX, endY);
     startNode->fCost = startNode->hCost;
 
@@ -35,7 +32,7 @@ std::vector<std::pair<int, int>> AIBot::findPath(int startX, int startY, int end
     int dy[] = {0, 0, -1, 1};
 
     while (!openSet.empty()) {
-        Node* current = openSet.top();
+        auto current = openSet.top();
         openSet.pop();
 
         if (closedSet[current->x][current->y]) continue;
@@ -44,19 +41,12 @@ std::vector<std::pair<int, int>> AIBot::findPath(int startX, int startY, int end
         if (current->x == endX && current->y == endY) {
             // Reconstruct path
             std::vector<std::pair<int, int>> path;
-            Node* node = current;
+            auto node = current;
             while (node != nullptr) {
                 path.push_back({node->x, node->y});
                 node = node->parent;
             }
             std::reverse(path.begin(), path.end());
-
-            // Clean up memory
-            for (int i = 0; i < mapManager.getRows(); i++) {
-                for (int j = 0; j < mapManager.getCols(); j++) {
-                    if (nodeMap[i][j]) delete nodeMap[i][j];
-                }
-            }
 
             return path;
         }
@@ -68,10 +58,9 @@ std::vector<std::pair<int, int>> AIBot::findPath(int startX, int startY, int end
             if (closedSet[newX][newY] || !mapManager.isValidForBot(newX, newY, current->atmosphere, current->canBreakWall))
                 continue;
 
-            Node* neighbor = nodeMap[newX][newY];
+            auto& neighbor = nodeMap[newX][newY];
             if (!neighbor) {
-                neighbor = new Node(newX, newY);
-                nodeMap[newX][newY] = neighbor;
+                neighbor = std::make_shared<Node>(newX, newY);
             }
 
             int tentativeGCost = current->gCost + 1;
@@ -106,13 +95,6 @@ std::vector<std::pair<int, int>> AIBot::findPath(int startX, int startY, int end
 
                 openSet.push(neighbor);
             }
-        }
-    }
-
-    // Clean up memory if no path found
-    for (int i = 0; i < mapManager.getRows(); i++) {
-        for (int j = 0; j < mapManager.getCols(); j++) {
-            if (nodeMap[i][j]) delete nodeMap[i][j];
         }
     }
 
