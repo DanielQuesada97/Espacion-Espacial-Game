@@ -18,16 +18,13 @@ void Game::run() {
     while (window.isOpen()) {
         float deltaTime = deltaClock.restart().asSeconds();
         
-        // Handle input
         if (!inputHandler.handleInput(currentState, selectedOption, player, mapManager)) {
             window.close();
             break;
         }
 
-        // Update game state
         update();
 
-        // Render
         render();
     }
 }
@@ -95,11 +92,8 @@ void Game::startBotDemo(int level) {
     
     mapManager.loadLevel(level);
     
-    // Set position and battery based on difficulty
     player.setPosition(1, 1);
-    // Set what's under the player at the starting position
     player.setUnderPlayer(mapManager.getCell(1, 1));
-    // Place player on the map
     mapManager.setCell(1, 1, 'P');
     
     const int batteries[] = {50, 40, 35};
@@ -112,14 +106,12 @@ void Game::startBotDemo(int level) {
         currentState = GameState::BOT_DEMO;
         botDemoTimer.restart();
     } else {
-        // No path, return to menu
         currentState = GameState::MENU;
         botDemoActive = false;
     }
 }
 
 void Game::findBotPath() {
-    // Find finish position
     int finishX = -1, finishY = -1;
     for (int i = 0; i < mapManager.getRows() && finishX == -1; i++) {
         for (int j = 0; j < mapManager.getCols(); j++) {
@@ -169,7 +161,6 @@ void Game::executeBotStep() {
     
     char nextCell = mapManager.getCell(nextX, nextY);
     
-    // Handle wall breaking
     if (nextCell == '#') {
         if (player.canBreak) {
             mapManager.setCell(nextX, nextY, '.');
@@ -182,10 +173,8 @@ void Game::executeBotStep() {
         }
     }
     
-    // Update old position
     mapManager.setCell(currentX, currentY, player.underPlayer);
     
-    // Handle special cells
     if (nextCell == 'F') {
         player.underPlayer = 'F';
         player.setPosition(nextX, nextY);
@@ -204,7 +193,6 @@ void Game::executeBotStep() {
         mapManager.setCell(player.getX(), player.getY(), 'P');
     }
     
-    // Update battery and energy
     player.battery--;
     player.energy++;
     if (player.energy >= maxEnergy) {

@@ -65,7 +65,6 @@ bool Renderer::initializeGraphics() {
     
 
 
-    // Initialize shapes
     cellShape.setSize(sf::Vector2f(CELL_SIZE, CELL_SIZE));
     cellShape.setOutlineThickness(1);
     cellShape.setOutlineColor(sf::Color(60, 60, 80));
@@ -214,7 +213,6 @@ void Renderer::drawUI(const Player& player) {
 void Renderer::drawMenu(int selectedOption) {
     window.clear(UI_BACKGROUND_COLOR);
 
-    // Draw title
     auto title = createText("ESTACION ESPACIAL", 48, HIGHLIGHT_COLOR);
     title.setPosition(sf::Vector2f(WINDOW_WIDTH / 2 - 200, 80));
     window.draw(title);
@@ -251,7 +249,6 @@ void Renderer::drawMenu(int selectedOption) {
         window.draw(optionText);
     }
 
-    // instructions
     auto instructions = createText("Usa W/A/S/D para mover, direccion + E para romper paredes", 18, sf::Color(150, 150, 170));
     instructions.setPosition(sf::Vector2f(50, WINDOW_HEIGHT - 50));
     window.draw(instructions);
@@ -266,27 +263,23 @@ void Renderer::display() {
 }
 
 void Renderer::drawGameOverScreen(bool gameWon) {
-    // Create overlay
     sf::RectangleShape overlay;
     overlay.setSize(sf::Vector2f(WINDOW_WIDTH, WINDOW_HEIGHT));
     overlay.setFillColor(sf::Color(0, 0, 0, 180));
     overlay.setPosition(sf::Vector2f(0, 0));
     window.draw(overlay);
 
-    // Draw the game over
     std::string gameOverString = gameWon ? "Ganaste" : "Perdiste";
     auto gameOverText = createText(gameOverString, 72, gameWon ? SUCCESS_COLOR : ERROR_COLOR);
     gameOverText.setPosition(sf::Vector2f(WINDOW_WIDTH / 2 - 150, WINDOW_HEIGHT / 2 - 100));
     window.draw(gameOverText);
 
-    // Draw return to menu message
     auto returnText = createText("Regresando al menu en 3 segundos...", 28, TEXT_COLOR);
     returnText.setPosition(sf::Vector2f(WINDOW_WIDTH / 2 - 200, WINDOW_HEIGHT / 2 + 50));
     window.draw(returnText);
 }
 
 void Renderer::drawBotDemoUI(const Player& player, int currentStep, int totalSteps, bool botWon, bool demoFinished) {
-    // Draw UI background
     sf::RectangleShape uiBackground;
     uiBackground.setSize(sf::Vector2f(WINDOW_WIDTH, UI_HEIGHT));
     uiBackground.setPosition(sf::Vector2f(0, WINDOW_HEIGHT - UI_HEIGHT));
@@ -303,7 +296,6 @@ void Renderer::drawBotDemoUI(const Player& player, int currentStep, int totalSte
     energyFillShape.setSize(sf::Vector2f((player.getEnergy() * 246) / maxEnergy, 21));
     window.draw(energyFillShape);
 
-    // Draw text
     auto batteryText = createText("Bateria: " + std::to_string(player.getBattery()), 22, TEXT_COLOR);
     batteryText.setPosition(sf::Vector2f(50, WINDOW_HEIGHT - 120));
     window.draw(batteryText);
@@ -312,7 +304,6 @@ void Renderer::drawBotDemoUI(const Player& player, int currentStep, int totalSte
     energyText.setPosition(sf::Vector2f(50, WINDOW_HEIGHT - 90));
     window.draw(energyText);
 
-    // Atmosphere
     std::string atmosphere = (player.getCurrentAtmosphere() == '.') ? "Normal" : std::string(1, player.getCurrentAtmosphere());
     auto atmosphereText = createText("Atmosfera: " + atmosphere, 22, TEXT_COLOR);
     atmosphereText.setPosition(sf::Vector2f(50, WINDOW_HEIGHT - 60));

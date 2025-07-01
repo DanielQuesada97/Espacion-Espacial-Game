@@ -107,19 +107,14 @@ bool MapManager::isValidForBot(int x, int y, char atmosphere, bool canBreak) con
     if (x < 0 || x >= rows || y < 0 || y >= cols) return false;
     char cell = map[x][y];
 
-    // Can always move to open spaces, tanks, and finish
     if (cell == '.' || cell == 'F' || isTank(cell)) return true;
 
-    // Can move through open doors
     if (cell == 'O') return true;
 
-    // Can move through doors if we have atmosphere A
     if (cell == 'D' && atmosphere == 'A') return true;
 
-    // Can move through walls if we have enough energy to break them
     if (cell == '#' && canBreak) return true;
 
-    // Walls without energy to break them are invalid
     if (cell == '#') return false;
 
     return false;

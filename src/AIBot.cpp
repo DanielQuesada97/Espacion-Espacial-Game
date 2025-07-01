@@ -65,22 +65,19 @@ std::vector<std::pair<int, int>> AIBot::findPath(int startX, int startY, int end
 
             int tentativeGCost = current->gCost + 1;
 
-            // Update atmosphere if we hit a tank
             char newAtmosphere = current->atmosphere;
             if (mapManager.isTank(mapManager.getCell(newX, newY))) {
                 newAtmosphere = mapManager.getCell(newX, newY);
             }
 
-            // Update energy and wall-breaking ability (like the player)
             int newEnergy = current->energy + 1;
             bool newCanBreak = (newEnergy >= maxEnergy);
 
-            // If we're moving through a wall, we need to break it
             if (mapManager.getCell(newX, newY) == '#') {
                 if (!newCanBreak) {
-                    continue; // Can't break wall without enough energy
+                    continue;
                 }
-                newEnergy = 0; // Energy resets after breaking wall
+                newEnergy = 0;
                 newCanBreak = false;
             }
 
@@ -98,5 +95,5 @@ std::vector<std::pair<int, int>> AIBot::findPath(int startX, int startY, int end
         }
     }
 
-    return {}; // No path found
+    return {};
 } 

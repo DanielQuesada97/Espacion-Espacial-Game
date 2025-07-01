@@ -32,11 +32,8 @@ bool InputHandler::handleInput(GameState& currentState, int& selectedOption,
                         
                         mapManager.loadLevel(difficulty);
                         
-                        // Player position and battery
                         player.setPosition(1, 1);
-                        // Set what's under the player at the starting position
                         player.setUnderPlayer(mapManager.getCell(1, 1));
-                        // Place player on the map
                         mapManager.setCell(1, 1, 'P');
                         
                         if (difficulty == 1) {
@@ -49,7 +46,6 @@ bool InputHandler::handleInput(GameState& currentState, int& selectedOption,
                         player.reset();
                         
                         if (isBotDemo) {
-                            // Signal to start bot demo
                             currentState = GameState::BOT_DEMO;
                         } else {
                             currentState = GameState::PLAYING;
@@ -68,12 +64,10 @@ bool InputHandler::handleInput(GameState& currentState, int& selectedOption,
             }
         }
     }
-    return true; // Continue running
-}
+    return true;
 
 void InputHandler::handlePlayerMovement(const sf::Event::KeyPressed* keyEvent, 
                                        Player& player, MapManager& mapManager) {
-    // Direction mapping: W=up, S=down, A=left, D=right
     struct Direction {
         int dx, dy;
         sf::Keyboard::Key key;
