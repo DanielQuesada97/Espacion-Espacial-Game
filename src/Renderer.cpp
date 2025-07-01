@@ -251,7 +251,7 @@ void Renderer::drawMenu(int selectedOption) {
         window.draw(optionText);
     }
 
-    // Enhanced instructions
+    // instructions
     auto instructions = createText("Usa W/A/S/D para mover, direccion + E para romper paredes", 18, sf::Color(150, 150, 170));
     instructions.setPosition(sf::Vector2f(50, WINDOW_HEIGHT - 50));
     window.draw(instructions);
