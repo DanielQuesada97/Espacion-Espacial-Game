@@ -4,29 +4,22 @@
 Renderer::Renderer(sf::RenderWindow& window) : window(window), fontLoaded(false) {}
 
 int Renderer::calculateCellSize(const MapManager& mapManager) const {
-    // Calculate available space for the map
     int availableWidth = WINDOW_WIDTH;
     int availableHeight = WINDOW_HEIGHT - UI_HEIGHT;
     
-    // Calculate cell sizes that would fit the map
     int cellSizeWidth = availableWidth / mapManager.getCols();
     int cellSizeHeight = availableHeight / mapManager.getRows();
     
-    // Use the smaller of the two to ensure the map fits in both dimensions
     int cellSize = std::min(cellSizeWidth, cellSizeHeight);
     
-    // Ensure minimum cell size for visibility
     cellSize = std::max(cellSize, 20);
     
-    // Ensure maximum cell size for consistency with original design
     cellSize = std::min(cellSize, CELL_SIZE);
     
     return cellSize;
 }
 
 bool Renderer::createDefaultFont() {
-    // Try to create a simple default font
-    // For now, we'll just try to load a basic system font
     std::vector<std::string> fallbackPaths = {
         "/System/Library/Fonts/Helvetica.ttc",
         "/System/Library/Fonts/Arial.ttf",
@@ -51,7 +44,7 @@ sf::Text Renderer::createText(const std::string& string, unsigned int size, cons
 
 
 bool Renderer::initializeGraphics() {
-    // Load font - try multiple common macOS font locations
+    // Load font
     std::vector<std::string> fontPaths = {
         "/System/Library/Fonts/Helvetica.ttc",
         "/System/Library/Fonts/Arial.ttf",
@@ -72,7 +65,7 @@ bool Renderer::initializeGraphics() {
     
 
 
-    // Initialize shapes with enhanced styling
+    // Initialize shapes
     cellShape.setSize(sf::Vector2f(CELL_SIZE, CELL_SIZE));
     cellShape.setOutlineThickness(1);
     cellShape.setOutlineColor(sf::Color(60, 60, 80));
@@ -100,7 +93,7 @@ bool Renderer::initializeGraphics() {
     finishShape.setOutlineThickness(3);
     finishShape.setOutlineColor(sf::Color::White);
 
-    // Enhanced energy bar
+    // energy bar
     energyBarShape.setSize(sf::Vector2f(250, 25));
     energyBarShape.setFillColor(ENERGY_BAR_COLOR);
     energyBarShape.setOutlineThickness(2);
@@ -117,7 +110,7 @@ void Renderer::drawMap(const MapManager& mapManager, const Player& player) {
     int offsetX = (WINDOW_WIDTH - mapManager.getCols() * cellSize) / 2;
     int offsetY = (WINDOW_HEIGHT - UI_HEIGHT - mapManager.getRows() * cellSize) / 2;
 
-    // Draw background grid
+    // Draw background
     for (int i = 0; i < mapManager.getRows(); i++) {
         for (int j = 0; j < mapManager.getCols(); j++) {
             float x = offsetX + j * cellSize;
@@ -155,9 +148,8 @@ void Renderer::drawMap(const MapManager& mapManager, const Player& player) {
                 window.draw(finishShape);
             }
 
-            // Draw player with glow effect
+            // Draw player
             if (i == player.getX() && j == player.getY()) {
-                // Draw glow
                 sf::CircleShape glow;
                 glow.setRadius(cellSize / 2);
                 glow.setPosition(sf::Vector2f(x, y));
@@ -182,7 +174,7 @@ void Renderer::drawUI(const Player& player) {
     uiBackground.setOutlineColor(sf::Color(60, 60, 80));
     window.draw(uiBackground);
 
-    // Draw energy bar with enhanced styling
+    // Draw energy bar
     energyBarShape.setPosition(sf::Vector2f(50, WINDOW_HEIGHT - 150));
     window.draw(energyBarShape);
 
@@ -190,7 +182,7 @@ void Renderer::drawUI(const Player& player) {
     energyFillShape.setSize(sf::Vector2f((player.getEnergy() * 246) / maxEnergy, 21));
     window.draw(energyFillShape);
 
-    // Draw text with enhanced styling
+    // Draw text
     auto batteryText = createText("Bateria: " + std::to_string(player.getBattery()), 22, TEXT_COLOR);
     batteryText.setPosition(sf::Vector2f(50, WINDOW_HEIGHT - 120));
     window.draw(batteryText);
@@ -205,7 +197,7 @@ void Renderer::drawUI(const Player& player) {
     atmosphereText.setPosition(sf::Vector2f(50, WINDOW_HEIGHT - 60));
     window.draw(atmosphereText);
 
-    // Wall breaking status with enhanced styling
+    // Wall breaking status
     if (player.getCanBreak()) {
         auto breakText = createText("Puedes romper paredes (presiona direccion + e)", 22, HIGHLIGHT_COLOR);
         breakText.setPosition(sf::Vector2f(350, WINDOW_HEIGHT - 120));
@@ -222,7 +214,7 @@ void Renderer::drawUI(const Player& player) {
 void Renderer::drawMenu(int selectedOption) {
     window.clear(UI_BACKGROUND_COLOR);
 
-    // Draw title with enhanced styling
+    // Draw title
     auto title = createText("ESTACION ESPACIAL", 48, HIGHLIGHT_COLOR);
     title.setPosition(sf::Vector2f(WINDOW_WIDTH / 2 - 200, 80));
     window.draw(title);
@@ -274,14 +266,14 @@ void Renderer::display() {
 }
 
 void Renderer::drawGameOverScreen(bool gameWon) {
-    // Create a semi-transparent overlay
+    // Create overlay
     sf::RectangleShape overlay;
     overlay.setSize(sf::Vector2f(WINDOW_WIDTH, WINDOW_HEIGHT));
     overlay.setFillColor(sf::Color(0, 0, 0, 180));
     overlay.setPosition(sf::Vector2f(0, 0));
     window.draw(overlay);
 
-    // Draw the game over message with enhanced styling
+    // Draw the game over
     std::string gameOverString = gameWon ? "Ganaste" : "Perdiste";
     auto gameOverText = createText(gameOverString, 72, gameWon ? SUCCESS_COLOR : ERROR_COLOR);
     gameOverText.setPosition(sf::Vector2f(WINDOW_WIDTH / 2 - 150, WINDOW_HEIGHT / 2 - 100));
@@ -311,7 +303,7 @@ void Renderer::drawBotDemoUI(const Player& player, int currentStep, int totalSte
     energyFillShape.setSize(sf::Vector2f((player.getEnergy() * 246) / maxEnergy, 21));
     window.draw(energyFillShape);
 
-    // Draw text with enhanced styling
+    // Draw text
     auto batteryText = createText("Bateria: " + std::to_string(player.getBattery()), 22, TEXT_COLOR);
     batteryText.setPosition(sf::Vector2f(50, WINDOW_HEIGHT - 120));
     window.draw(batteryText);
@@ -326,7 +318,6 @@ void Renderer::drawBotDemoUI(const Player& player, int currentStep, int totalSte
     atmosphereText.setPosition(sf::Vector2f(50, WINDOW_HEIGHT - 60));
     window.draw(atmosphereText);
 
-    // Bot demo specific info with enhanced styling
     auto demoText = createText("Bot Demo - Paso " + std::to_string(currentStep) + "/" + std::to_string(totalSteps - 1), 22, HIGHLIGHT_COLOR);
     demoText.setPosition(sf::Vector2f(350, WINDOW_HEIGHT - 120));
     window.draw(demoText);
