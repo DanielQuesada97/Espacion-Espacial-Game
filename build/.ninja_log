@@ -1,9 +1,0 @@
-# ninja log v6
-20	2118	1751335283217284628	CMakeFiles/estacion_espacial_v3.dir/src/MapManager.cpp.o	8ed472a3a15c1dab
-15	3098	1751335283212100257	CMakeFiles/estacion_espacial_v3.dir/src/Player.cpp.o	9b636bea4d9188b6
-2	3313	1751335283198885712	CMakeFiles/estacion_espacial_v3.dir/src/main.cpp.o	8c039fa7ca84933c
-3	3319	1751335283200565206	CMakeFiles/estacion_espacial_v3.dir/src/Game.cpp.o	2bb3105acded8a19
-25	3471	1751335283222209329	CMakeFiles/estacion_espacial_v3.dir/src/Renderer.cpp.o	cb9b2b1302edd155
-22	3513	1751335283219486918	CMakeFiles/estacion_espacial_v3.dir/src/AIBot.cpp.o	866a9165c2d6b94c
-2125	4552	1751335285322302427	CMakeFiles/estacion_espacial_v3.dir/src/InputHandler.cpp.o	c6a108ceb4aba658
-4553	4676	1751335287749790307	estacion_espacial_v3	c44563fd5e0f2405
