@@ -1,4 +1,4 @@
-# Estacion Espacial v4 - Modular Structure
+# Estacion Espacial 
 # 🚀 Estación Espacial
 
 Bienvenido a **Estación Espacial**, un juego 2D por turnos donde deberás abrirte camino a través de una estación llena de obstáculos para alcanzar la salida. Utiliza tu ingenio, administra tu energía y batería, y prepárate para interactuar con puertas, tanques de atmósfera y muros destructibles.
